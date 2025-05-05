@@ -73,6 +73,6 @@ The related logs for this section are present in the fundAndTransferSOL_logs.pdf
    ```
    Then ran the following command to transfer 1 SOL to another account we created using step 2
    ```bash
-   solana transfer <address_here> 1 --alow-unfunded-recipient
+   solana transfer <address_here> 1 --allow-unfunded-recipient
    ```
-   Note: we used the --alow-unfunded-recipient flag because the second account we created to make the transfer was not funded by the faucet.
+   Note: we used the --allow-unfunded-recipient flag because the second account we created to make the transfer was not funded by the faucet.
