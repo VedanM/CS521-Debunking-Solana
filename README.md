@@ -24,7 +24,7 @@ This section walks through the process of setting up a validator node in Solana.
 - Set up a vote account linked to the validator account for voting in the consensus process.
 - Transferred SOL from the validator account to another created account for transaction testing.
 
-The related logs for this section are present in the fundAndTransferSOL_logs.pdf file.
+If you want to try it out, check out the transactions folder and run the transfer_SOL.sh script. The related logs for this section are present in the fundAndTransferSOL_logs.pdf file.
 
 **Steps Taken:**
 1. **Set up Solana CLI:**  
@@ -42,7 +42,11 @@ The related logs for this section are present in the fundAndTransferSOL_logs.pdf
    ```
    
 3. **Fund the account:**  
-   Ran the following command to fetch the address of our wallet and funded this address by requesting SOL on the testnet using the faucet interface 
+   Used the following command to fund the wallet through the faucet:
+   ```bash
+   solana airdrop 10
+   ```
+   However, sometimes this command errors out. In that case, run the following command to fetch the address of the wallet and funded this address by requesting SOL on the testnet using the faucet interface 
    https://faucet.solana.com
    ```bash
    solana address
