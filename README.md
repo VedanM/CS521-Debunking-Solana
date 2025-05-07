@@ -9,15 +9,26 @@ Fee Calculation and Rent <br />
 Validator Lifecycle & Voting <br /> <br />
 
 We also looked into the possible implementation of ALH (Accounts Lattice Hash) instead of ADH (Accounts Delta Hash) in Solana and its limitations. <br /> <br />
-Members:<br />
+**Members:** <br />
 Vedan Malhotra (vedanm2)<br />
 Tanay Pareek (tpareek2)<br />
 Nick Messina (messina4)<br />
 Aryan Malhotra (aryanm8)<br />
 
+**Contributions**: <br />
+We all worked together on setting up Solana locally on our machines, as well as creating the scripts to test the ALH/ADH hash timings. We all tried to implement the same portions of the project, so we ended up always meeting to jointly work on each section. But, outside of this, each team member focused on these sections specifically:
+
+Aryan: Created the bash script to setup validator nodes locally and to create SOL transactions <br />
+Vedan: Created the bash scripts to setup Agave locally <br />
+Tanay: Deployed Validator nodes without Agave locally <br />
+Nick: Worked on hashing scripts and aided other teammembers with setting up their section
+
+
 ## What we did:
 
 ### Section 1: **Trying to set up a Validator Node and funded accounts to transfer SOL**
+
+Files contained in `transactions`
 
 This section walks through the process of setting up a validator node in Solana. The goal was to create both a validator account and a vote account to participate in the network's consensus mechanism. Here's what we did:
 
@@ -90,7 +101,7 @@ If you want to try it out, check out the transactions folder and run the transfe
 
 ### Section 2: **Comparing Account Delta Hashing vs. Account Lattice Hashing**
 
-Files Contained in `hashing`
+Files contained in `hashing`
 
 The purpose of the scripts was to compare the performance difference between the computationally intensive Merkle tree aproach (ADH) versus the simpler additive approach (ALH).
 
@@ -190,7 +201,7 @@ In both languages ALH was faster in computing a hash of account states.
 
 We then recreated the test in C++. We did this because of C++'s more consistent behavior and minimal overhead compared to Python.
 
-Some of our hypothesises for why ADH would be faster in Python include:
+Some of our hypotheses for why ALH isn't significantly faster than ADH in Python include:
 
 - Python Optimizations:
   - The Merkle tree calculation might be benefiting from Python's list comprehensions
