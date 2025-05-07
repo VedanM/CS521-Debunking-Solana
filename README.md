@@ -201,7 +201,123 @@ Some of our hypothesises for why ADH would be faster in Python include:
   - Memory or CPU cache effects specific to your friend's machine
   - Python version or interpreter differences
 
-### Section 3: **Setting up Solana Locally Using Agave**
+### Section 3: **Setting up Solana Locally Without Agave (Solana 1.18.8)**
+
+Files contained in `solana-cluster`
+
+This section outlines how we successfully set up a local Solana cluster with multiple validators entirely using the native `solana` toolchain (version 1.18.8), without relying on Agave. The goal was to launch a self-contained 4-node Solana cluster for testing validator behavior and ledger consistency. The entire setup was done on macOS, but the steps generalize to any Unix-like system with Solana installed.
+
+**Generating the Bootstrap Validator and Initializing the Cluster**
+
+The first step was to generate the required keypairs for the bootstrap validator:
+* Identity keypair: validator-keypair.json
+* Vote account keypair: vote-account-keypair.json
+
+We then initialized the cluster by generating a new genesis file using the `solana-genesis` command. This sets up the initial parameters for the network such as lamport distributions, tick scheduling, rent/burn parameters, and faucet configuration:
+
+```bash
+solana-genesis \
+  --ledger ~/solana-ledger \
+  --hashes-per-tick sleep \
+  --bootstrap-validator validator-keypair.json vote-account-keypair.json vote-account-keypair.json \
+  --bootstrap-validator-lamports 500000000000 \
+  --bootstrap-validator-stake-lamports 250000000000 \
+  --faucet-pubkey validator-keypair.json \
+  --faucet-lamports 1000000000000 \
+  --cluster-type development \
+  --fee-burn-percentage 0 \
+  --rent-burn-percentage 0 \
+  --target-lamports-per-signature 10000 \
+  --target-signatures-per-slot 20000 \
+  --ticks-per-slot 8 \
+  --lamports-per-byte-year 3480 \
+  --rent-exemption-threshold 2.0 \
+  --max-genesis-archive-unpacked-size 1073741824 \
+  --vote-commission-percentage 10
+```
+
+This creates the necessary genesis.bin and ledger structure in ~/solana-ledger.
+
+**Starting the Bootstrap Validator**
+
+We then launched the bootstrap validator using the following command, exposing RPC, gossip, and TPU ports locally, and enabling faucet access:
+```bash
+solana-validator \
+  --identity validator-keypair.json \
+  --vote-account vote-account-keypair.json \
+  --ledger ~/solana-ledger \
+  --rpc-port 8899 \
+  --gossip-port 8001 \
+  --dynamic-port-range 8000-8020 \
+  --expected-genesis-hash <hash from solana-genesis> \
+  --rpc-bind-address 0.0.0.0 \
+  --rpc-faucet-address 127.0.0.1:9900 \
+  --enable-rpc-transaction-history \
+  --full-rpc-api \
+  --no-port-check \
+  --log -
+```
+
+The --no-port-check ensures we can bind to needed ports even in parallel test environments. The --rpc-faucet-address allows for airdrops to local accounts.
+
+To allow CLI tools like `solana balance` or `solana airdrop` to interface with this validator, we ran:
+```bash
+solana config set --url http://127.0.0.1:8899
+```
+
+**Adding Additional Validators to the Cluster**
+
+To create additional validators, we generated new identity and vote keypairs and then copied the bootstrap ledger as a starting point for each new validator. For instance, for Validator 2:
+```bash
+cp -r ~/solana-ledger ~/solana-ledger-2
+```
+
+We then started Validator 2 with a different set of ports, and pointed it to the bootstrap validator as its entrypoint:
+
+```bash
+solana-validator \
+  --identity validator2-identity-keypair.json \
+  --vote-account validator2-vote-keypair.json \
+  --ledger ~/solana-ledger-2 \
+  --rpc-port 8910 \
+  --gossip-port 8017 \
+  --dynamic-port-range 8020-8040 \
+  --expected-genesis-hash <same hash> \
+  --rpc-bind-address 0.0.0.0 \
+  --rpc-faucet-address 0.0.0.0:9900 \
+  --entrypoint 127.0.0.1:8001 \
+  --trusted-validator <bootstrap validator pubkey> \
+  --known-validator <bootstrap validator pubkey> \
+  --enable-rpc-transaction-history \
+  --full-rpc-api \
+  --no-port-check \
+  --log -
+```
+
+The key flags to note for validators joining an existing cluster are:
+
+* --entrypoint: specifies where to find the bootstrap validator
+* --trusted-validator and --known-validator: enforces secure validator discovery
+* --expected-genesis-hash: must match the genesis of the bootstrap validator
+* --rpc-faucet-address: shared faucet access for all validators
+
+Before setting up validators 3 and 4, we wanted to ensure that the Bootstrap validator and validator were connected and correctly running. To do so, we ran the command below:
+```bash
+solana gossip
+```
+
+Unfortunately, this command showed that the nodes were not active in the local cluster. Moreover, However, when correctly configured, all 4 validators should have appeared here with IP 127.0.0.1 and their assigned gossip ports.
+
+**Common Issues and Fixes**
+
+* Invalid entrypoint error: Occurs if the entrypoint address is malformed or the bootstrap validator isn’t gossiping correctly. Fixed by ensuring `--entrypoint` is `127.0.0.1:<bootstrap gossip port>`.
+* Genesis hash mismatch: Happens when ledgers are misaligned. Used `cp -r` to copy the bootstrap ledger to other validators
+* No nodes in gossip: Research and use of AI suggested that this is typically caused by omitted `--entrypoint`, or network isolation. However, unable to resolve
+* CLI commands defaulting to mainnet: Resolved by running `solana config set --url http://127.0.0.1:8899`
+
+Finally, using the progress made here, we switched to Agave to set up our local Solana cluster, the details of which can be found in the following section.
+
+### Section 4: **Setting up Solana Locally Using Agave**
 
 Files contained in `agave`
 
