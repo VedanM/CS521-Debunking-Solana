@@ -306,7 +306,15 @@ Before setting up validators 3 and 4, we wanted to ensure that the Bootstrap val
 solana gossip
 ```
 
-Unfortunately, this command showed that the nodes were not active in the local cluster. Moreover, However, when correctly configured, all 4 validators should have appeared here with IP 127.0.0.1 and their assigned gossip ports.
+Unfortunately, this command showed that the nodes were not active in the local cluster. Moreover, the image below showed a lot of other validators, which did not seem to be configure by us.
+
+![alt text](https://github.com/VedanM/CS521-Debunking-Solana/blob/main/solana-cluster/images/solanass1.png)
+
+Curious to understand whether why there were so many validators, we ran the command `solana validators` which resulted in the output below:
+
+![alt text](https://github.com/VedanM/CS521-Debunking-Solana/blob/main/solana-cluster/images/solanass2.png)
+
+Through this, and the `solana config get` command, we were able to realize that we were connected to the mainnet, and were able to fix the configuration as described in **Common Issues and Fixes** at the end of this section. However, this still not show us our local validators communicating when running `solana gossip`. When correctly configured, all 4 validators should have appeared here with IP 127.0.0.1 and their assigned gossip ports.
 
 **Common Issues and Fixes**
 
