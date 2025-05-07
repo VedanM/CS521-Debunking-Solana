@@ -207,7 +207,7 @@ Files contained in `agave`
 
 This section walks through setting up Solana using the Agave validator. The goal was to setup a local Solana cluster with multiple validators, retrieving the ALH and ADH hashes generated to compare their values while the cluster ran.
 
-**`launch_alh_comparison_wsl.sh`**
+**`launch_cluster_wsl.sh`**
 
 This bash script was created to initialize the bootstrap validator and Solana genesis (starting the blockchain). Before running this script, one should have Agave installed (instructions found [here](https://docs.anza.xyz/cli/install)). We used version `2.2.0`.
 
