@@ -200,3 +200,107 @@ Some of our hypothesises for why ADH would be faster in Python include:
 - System-specific Issues:
   - Memory or CPU cache effects specific to your friend's machine
   - Python version or interpreter differences
+
+### Section 3: **Setting up Solana Locally Using Agave**
+
+Files contained in `agave`
+
+This section walks through setting up Solana using the Agave validator. The goal was to setup a local Solana cluster with multiple validators, retrieving the ALH and ADH hashes generated to compare their values while the cluster ran.
+
+**`launch_alh_comparison_wsl.sh`**
+
+This bash script was created to initialize the bootstrap validator and Solana genesis (starting the blockchain). Before running this script, one should have Agave installed (instructions found [here](https://docs.anza.xyz/cli/install)). We used version `2.2.0`.
+
+The initial steps of generating the cluster's bootstrap validator's identity, vote, and stake key-pairs are the same as Section 1.
+
+The following code starts up the blockchain. Here, we can see the bootstrap validator is assigned to the Solana key-pairs we generated prior, with lamport values being initialized for testing. These values can be arbitrarily assigned, and the same goes for burn percentages and vote commission. The rest of these variables were default options when running solana-genesis, and are explained by running `solana-genesis -help`.
+
+```bash
+solana-genesis \
+	--ledger "$LEDGER" \
+	--hashes-per-tick sleep \
+	--bootstrap-validator "$IDENTITY_KEY" "$VOTE_KEY" "$STAKE_KEY" \
+	--bootstrap-validator-lamports 500000000000 \
+   --bootstrap-validator-stake-lamports 250000000000 \
+	--faucet-pubkey "$IDENTITY_KEY" \
+	--faucet-lamports 1000000000000 \
+	--cluster-type development \
+	--fee-burn-percentage 0 \
+	--rent-burn-percentage 0 \
+	--target-lamports-per-signature 10000 \
+	--target-signatures-per-slot 20000 \
+	--ticks-per-slot 8 \
+	--lamports-per-byte-year 3480 \
+	--rent-exemption-threshold 2.0 \
+	--max-genesis-archive-unpacked-size 1073741824 \
+	--vote-commission-percentage 10
+```
+
+To run the validator created, we call `agave-validator` as below:
+
+```bash
+nohup agave-validator \
+    --identity "$IDENTITY_KEY" \
+    --vote-account "$VOTE_KEY" \
+    --ledger "$LEDGER" \
+    --require-tower \
+    --rpc-port 8899 \
+    --rpc-bind-address 0.0.0.0 \
+    --rpc-faucet-address 127.0.0.1:9900 \
+    --gossip-port 8001 \
+    --dynamic-port-range 8000-8020 \
+    --enable-rpc-transaction-history \
+    --full-rpc-api \
+    --no-port-check \
+    --no-wait-for-vote-to-start-leader \
+    --log "$LOGDIR/validator.log" > nohup.out 2>&1 &
+```
+
+`nohup` right before `agave-validator` allows the process to keep running even if you close the terminal. It ignores SIGHUP (hangup) signals.
+
+Running `agave-validator -help` will succinctly describe each attribute. Essentially, this creates a validator which gossips on port 8001 and binds the RPC port to localhost. The faucet address enables us to interact through the faucet interface (aka airdrop SOL). The biggest option to note is `--no-wait-for-vote-start-leader`. This automatically tells the validator that even if no votes have been landed, just start producing slots (which is helpful for testing the hashes we want).
+
+We then start the faucet for the validator in the script through `nohup solana-faucet validator-identity-keypair.json` and wait for the validator RPC to be ready (as it sometimes takes time to start up). If we timeout here, we know there's an issue with starting the validator RPC.
+
+The rest of the code in the script is to visualize/check the prior functions were properly setup without errors. If there are any, the logs should accurately describe the issue which occurred.
+
+**`launch_second_validator_wsl.sh`**
+
+This bash script runs a second validator that connects to the cluster/bootstrap validator created before. We have to create new keypairs for this validator; however, we use the same ledger from the first validator as part of creating the connection. To do this, we simply copied the previous ledger into the directory of the second validator through this command in the script: `cp -r "$FIRST_LEDGER" "$SECOND_LEDGER"`.
+
+The below snippet shows the setup of the second validator:
+
+```bash
+nohup agave-validator \
+    --identity "$IDENTITY_KEY" \
+    --vote-account "$VOTE_KEY" \
+    --ledger "$SECOND_LEDGER" \
+    --rpc-port 8898 \
+    --rpc-bind-address 0.0.0.0 \
+    --rpc-faucet-address 127.0.0.1:9901 \
+    --gossip-port 8101 \
+    --dynamic-port-range 8100-8120 \
+    --enable-rpc-transaction-history \
+    --full-rpc-api \
+    --no-port-check \
+    --no-wait-for-vote-to-start-leader \
+    --known-validator "$FIRST_VALIDATOR_PUBKEY" \
+    --entrypoint 127.0.0.1:8001 \
+    --log "$LOGDIR/validator.log" > nohup.out 2>&1 &
+```
+
+This setup mirrors the first script (though `IDENTITY_KEY`, `VOTE_KEY`, etc. now point to the second validator, and we use different ports to bind to since validators can't use the same ones). The only difference here is we added `--known-validator` and `--entrypoint`. These specify trusted/recognized validator identities and which port to access (otherwise the validator will default to public entrypoints on the mainnet/devnet).
+
+The rest of the script is practically the same as the first one.
+
+**`launch_monitoring_wsl.sh`**
+
+This script continually monitors the state of each validator, returning diagnostic information visually. It's prints updated information every 10 seconds while the cluster and validators are setup and running concurrently. Monitoring was setup purely for testing and collecting data. See the script for more information.
+
+**`launch_alh_comparison_wsl.sh`**
+
+This script collects the N (in our case, 50) most recent slots created and retrieves the ALH and ADH hash that was computed for each one. These can be found from the validator's logs. The hashes are then compared to see if there was a difference in computation, printing if there was a match as well as what hashes were created. Agave v2.2.0 still shows both hashings, which is great for visualizing the differences between ALH/ADH. See the script for more information.
+
+**Issues**
+
+Unfortunately, when trying to connect the second validator to the bootstrap validator, we were unsuccessful. There was a problem in connecting it to the first validator's gossip port. As a result, we only had one validator properly running in the cluster, though that should be enough to calculate the slot ALH and ADH hashes. However, these hashes weren't present in the log. We theorize that since the Solana cluster was setup in WSL, which is known for having issues with file descriptor and RAM limitations for Solana, the logs were unable to display the ALH and ADH hashes properly. It's also possible that the log verbosity levels were too low (which wasn't fixable), or the validator was progressing mostly with votes and no account changes (in which case the delta hashes and lattice hashes might not be computed or logged as accounts aren't being modified otherwise).
