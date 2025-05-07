@@ -16,15 +16,15 @@ Nick Messina (messina4)<br />
 Aryan Malhotra (aryanm8)<br />
 
 **Contributions**: <br />
-We all worked together on setting up Solana locally on our machines, as well as creating the scripts to test the ALH/ADH hash timings. We all tried to implement the same portions of the project, so we ended up always meeting to jointly work on each section. But, outside of this, each team member focused on these sections specifically:
+We all worked together on setting up Solana locally on our machines and creating the scripts to test the ALH/ADH hash timings. We all tried to implement the same portions of the project, so we always met to work jointly on each section. But, outside of this, each team member focused on these sections specifically:
 
-Aryan: Created the bash script to setup validator nodes locally and to create SOL transactions <br />
-Vedan: Created the bash scripts to setup Agave locally <br />
+Aryan: Created the bash script to set up validator nodes locally and to create SOL transactions <br />
+Vedan: Created the bash scripts to set up Agave locally <br />
 Tanay: Deployed Validator nodes without Agave locally <br />
-Nick: Worked on hashing scripts and aided other teammembers with setting up their section
+Nick: Worked on hashing scripts and aided other team members with setting up their section
 
 
-## What we did:
+## What We Did:
 
 ### Section 1: **Trying to set up a Validator Node and funded accounts to transfer SOL**
 
@@ -343,7 +343,7 @@ Finally, using the progress made here, we switched to Agave to set up our local 
 
 Files contained in `agave`
 
-This section walks through setting up Solana using the Agave validator. The goal was to setup a local Solana cluster with multiple validators, retrieving the ALH and ADH hashes generated to compare their values while the cluster ran.
+This section walks through setting up Solana using the Agave validator. The goal was to set up a local Solana cluster with multiple validators, retrieving the ALH and ADH hashes generated to compare their values while the cluster ran.
 
 **`launch_cluster_wsl.sh`**
 
@@ -400,7 +400,7 @@ Running `agave-validator -help` will succinctly describe each attribute. Essenti
 
 We then start the faucet for the validator in the script through `nohup solana-faucet validator-identity-keypair.json` and wait for the validator RPC to be ready (as it sometimes takes time to start up). If we timeout here, we know there's an issue with starting the validator RPC.
 
-The rest of the code in the script is to visualize/check the prior functions were properly setup without errors. If there are any, the logs should accurately describe the issue which occurred.
+The rest of the code in the script is to visualize/check that the prior functions were properly set up without errors. If there are any, the logs should accurately describe the issue that occurred.
 
 **`launch_second_validator_wsl.sh`**
 
@@ -433,7 +433,7 @@ The rest of the script is practically the same as the first one.
 
 **`launch_monitoring_wsl.sh`**
 
-This script continually monitors the state of each validator, returning diagnostic information visually. It's prints updated information every 10 seconds while the cluster and validators are setup and running concurrently. Monitoring was setup purely for testing and collecting data. See the script for more information.
+This script continually monitors the state of each validator, returning diagnostic information visually. It prints updated information every 10 seconds while the cluster and validators are set up and running concurrently. Monitoring was set up purely for testing and collecting data. See the script for more information.
 
 **`launch_alh_comparison_wsl.sh`**
 
@@ -441,4 +441,4 @@ This script collects the N (in our case, 50) most recent slots created and retri
 
 **Issues**
 
-Unfortunately, when trying to connect the second validator to the bootstrap validator, we were unsuccessful. There was a problem in connecting it to the first validator's gossip port. As a result, we only had one validator properly running in the cluster, though that should be enough to calculate the slot ALH and ADH hashes. However, these hashes weren't present in the log. We theorize that since the Solana cluster was setup in WSL, which is known for having issues with file descriptor and RAM limitations for Solana, the logs were unable to display the ALH and ADH hashes properly. It's also possible that the log verbosity levels were too low (which wasn't fixable), or the validator was progressing mostly with votes and no account changes (in which case the delta hashes and lattice hashes might not be computed or logged as accounts aren't being modified otherwise).
+Unfortunately, when trying to connect the second validator to the bootstrap validator, we were unsuccessful. There was a problem in connecting it to the first validator's gossip port. As a result, we only had one validator properly running in the cluster, though that should be enough to calculate the slot ALH and ADH hashes. However, these hashes weren't present in the log. We theorize that since the Solana cluster was set up in WSL, which is known for having issues with file descriptors and RAM limitations for Solana, the logs were unable to display the ALH and ADH hashes properly. It's also possible that the log verbosity levels were too low (which wasn't fixable), or the validator was progressing mostly with votes and no account changes (in which case, the delta hashes and lattice hashes might not be computed or logged as accounts aren't being modified otherwise).
