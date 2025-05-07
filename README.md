@@ -144,3 +144,59 @@ def compute_adh(accounts: List[bytes]) -> bytes:
   - If odd number of hashes, duplicates the last one
   - Repeats until only one hash remains (the Merkle root)
 - Returns the hexadecimal representation of the root and computation time
+
+**`solana_hashing.cpp`**
+
+**ALH**
+
+`adh_merkle_root`
+
+- Takes a vector of accounts
+- Sorts the accounts
+- Computes secure hash for each account
+- Builds a Merkle tree:
+  - Pairs adjacent hashes
+  - If odd number of hashes, duplicates the last one
+  - Concatenates pairs as strings and hashes them
+  - Repeats until only one hash remains (the Merkle root)
+- Returns the Merkle root as uint64_t
+
+`alh_hash`
+
+- Takes a vector of accounts
+- For each account, computes the secure hash
+- Sums all hash values with natural 64-bit wrapping
+- Returns the sum as uint64_t
+
+**Results**
+
+**Python**
+
+```bash
+ADH Hash: 3ff40a3a52e6809e4c28d5f1aeeeb2ba8bc2a0f8734e5209d29ae16e9e63ca54, Time: 0.016403913497924805
+ALH Hash: 17870609279760938959, Time: 0.00869607925415039
+1.8863574052749903
+```
+
+**C++**
+
+```bash
+ADH Merkle Root: 17962529666642118938, Time: 0.347235 s
+ALH Sum Hash: 3233227066089387301, Time: 0.046957 s
+Speed-up: 7.39474×
+```
+
+In both languages ALH was faster in computing a hash of account states.
+
+**Issues**
+
+On some of our machines when running the python experiment we got the unexpected result where ADH was actually faster than ALH. We then recreated the test in C++. We did this because of C++'s more consistent behavior and minimal overhead compared to Python.
+
+Some of our hypothesises for why ADH would be faster in Python include:
+
+- Python Optimizations:
+  - The Merkle tree calculation might be benefiting from Python's list comprehensions
+  - The sum-based ALH might be using Python's integer arithmetic inefficiently
+- System-specific Issues:
+  - Memory or CPU cache effects specific to your friend's machine
+  - Python version or interpreter differences
