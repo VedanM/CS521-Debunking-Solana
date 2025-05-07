@@ -147,8 +147,6 @@ def compute_adh(accounts: List[bytes]) -> bytes:
 
 **`solana_hashing.cpp`**
 
-**ALH**
-
 `adh_merkle_root`
 
 - Takes a vector of accounts
@@ -190,7 +188,7 @@ In both languages ALH was faster in computing a hash of account states.
 
 **Issues**
 
-On some of our machines when running the python experiment we got the unexpected result where ADH was actually faster than ALH. We then recreated the test in C++. We did this because of C++'s more consistent behavior and minimal overhead compared to Python.
+We then recreated the test in C++. We did this because of C++'s more consistent behavior and minimal overhead compared to Python.
 
 Some of our hypothesises for why ADH would be faster in Python include:
 
@@ -210,8 +208,9 @@ This section outlines how we successfully set up a local Solana cluster with mul
 **Generating the Bootstrap Validator and Initializing the Cluster**
 
 The first step was to generate the required keypairs for the bootstrap validator:
-* Identity keypair: validator-keypair.json
-* Vote account keypair: vote-account-keypair.json
+
+- Identity keypair: validator-keypair.json
+- Vote account keypair: vote-account-keypair.json
 
 We then initialized the cluster by generating a new genesis file using the `solana-genesis` command. This sets up the initial parameters for the network such as lamport distributions, tick scheduling, rent/burn parameters, and faucet configuration:
 
@@ -241,6 +240,7 @@ This creates the necessary genesis.bin and ledger structure in ~/solana-ledger.
 **Starting the Bootstrap Validator**
 
 We then launched the bootstrap validator using the following command, exposing RPC, gossip, and TPU ports locally, and enabling faucet access:
+
 ```bash
 solana-validator \
   --identity validator-keypair.json \
@@ -261,6 +261,7 @@ solana-validator \
 The --no-port-check ensures we can bind to needed ports even in parallel test environments. The --rpc-faucet-address allows for airdrops to local accounts.
 
 To allow CLI tools like `solana balance` or `solana airdrop` to interface with this validator, we ran:
+
 ```bash
 solana config set --url http://127.0.0.1:8899
 ```
@@ -268,6 +269,7 @@ solana config set --url http://127.0.0.1:8899
 **Adding Additional Validators to the Cluster**
 
 To create additional validators, we generated new identity and vote keypairs and then copied the bootstrap ledger as a starting point for each new validator. For instance, for Validator 2:
+
 ```bash
 cp -r ~/solana-ledger ~/solana-ledger-2
 ```
@@ -296,12 +298,13 @@ solana-validator \
 
 The key flags to note for validators joining an existing cluster are:
 
-* --entrypoint: specifies where to find the bootstrap validator
-* --trusted-validator and --known-validator: enforces secure validator discovery
-* --expected-genesis-hash: must match the genesis of the bootstrap validator
-* --rpc-faucet-address: shared faucet access for all validators
+- --entrypoint: specifies where to find the bootstrap validator
+- --trusted-validator and --known-validator: enforces secure validator discovery
+- --expected-genesis-hash: must match the genesis of the bootstrap validator
+- --rpc-faucet-address: shared faucet access for all validators
 
 Before setting up validators 3 and 4, we wanted to ensure that the Bootstrap validator and validator were connected and correctly running. To do so, we ran the command below:
+
 ```bash
 solana gossip
 ```
@@ -318,10 +321,10 @@ Through this, and the `solana config get` command, we were able to realize that 
 
 **Common Issues and Fixes**
 
-* Invalid entrypoint error: Occurs if the entrypoint address is malformed or the bootstrap validator isn’t gossiping correctly. Fixed by ensuring `--entrypoint` is `127.0.0.1:<bootstrap gossip port>`.
-* Genesis hash mismatch: Happens when ledgers are misaligned. Used `cp -r` to copy the bootstrap ledger to other validators
-* No nodes in gossip: Research and use of AI suggested that this is typically caused by omitted `--entrypoint`, or network isolation. However, unable to resolve
-* CLI commands defaulting to mainnet: Resolved by running `solana config set --url http://127.0.0.1:8899`
+- Invalid entrypoint error: Occurs if the entrypoint address is malformed or the bootstrap validator isn’t gossiping correctly. Fixed by ensuring `--entrypoint` is `127.0.0.1:<bootstrap gossip port>`.
+- Genesis hash mismatch: Happens when ledgers are misaligned. Used `cp -r` to copy the bootstrap ledger to other validators
+- No nodes in gossip: Research and use of AI suggested that this is typically caused by omitted `--entrypoint`, or network isolation. However, unable to resolve
+- CLI commands defaulting to mainnet: Resolved by running `solana config set --url http://127.0.0.1:8899`
 
 Finally, using the progress made here, we switched to Agave to set up our local Solana cluster, the details of which can be found in the following section.
 
